@@ -25,8 +25,10 @@ apply plugin: 'io.codearte.nexus-staging'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'application'
 
+apply plugin: 'ivy-publish'
+
 group 'org.web3j'
-version '1.0.7'
+version '1.1.1'
 
 sourceCompatibility = 1.8
 
@@ -53,7 +55,7 @@ jacocoTestReport {
                     exclude: ['org/web3j/abi/datatypes/generated/**'])
         })
     }
-}
+}   
 
 ext {
     ossrhUsername = project.hasProperty('ossrhUsername') ? project.property('ossrhUsername') : ''
@@ -124,105 +126,25 @@ task sourcesJar(type: Jar) {
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        ivyJava(IvyPublication) {
             from components.java
-
-            artifact sourcesJar {
-                classifier 'sources'
+        }
+    }
+    repositories {
+        ivy {
+            url "file://${System.properties['user.home']}/.ivy2/local"
+            layout 'pattern', {
+                artifact "[organisation]/[module]/[revision]/[type]s/[artifact].[ext]"
+                ivy "[organisation]/[module]/[revision]/[type]s/[artifact].[ext]"
             }
         }
     }
 }
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    publications = ['mavenJava']
-    publish = true
-    pkg {
-        repo = 'maven'
-        name = 'org.web3j'
-        desc = 'web3j is a lightweight Java library for integration with Ethereum clients'
-        userOrg = 'web3j'
-        licenses = ['Apache-2.0']
-        issueTrackerUrl = 'https://github.com/web3j/web3j/issues'
-        vcsUrl = 'https://github.com/web3j/web3j.git'
-        websiteUrl = 'http://web3j.org'
-        publicDownloadNumbers = true
-    }
-}
-
 
 artifacts {
     archives sourcesJar, javadocJar
 }
 
-signing {
-    required { gradle.taskGraph.hasTask('uploadArchives') }  // only execute as part of this task
-    sign configurations.archives
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-                authentication(
-                        userName: ossrhUsername,
-                        password: ossrhPassword
-                )
-            }
-
-            pom.project {
-                name 'web3j'
-                packaging 'jar'
-                description 'web3j is a lightweight Java library for integration with Ethereum clients'
-                url 'http://web3j.org'
-
-                scm {
-                    connection 'scm:git:https://github.com/web3j/web3j.git'
-                    url 'https://github.com/web3j/web3j.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'conor10'
-                        name 'Conor Svensson'
-                        email 'conor10@gmail.com'
-                    }
-                }
-            }
-        }
-    }
-}
-
 // Build command line library release with target distShadowZip
 mainClassName = 'org.web3j.console.Runner'
 applicationName = 'web3j'
-
-
-task release {
-    // remove once integration tests are running as part of the build
-    check.dependsOn.remove(integrationTest)
-
-    dependsOn 'clean'
-    dependsOn 'build'
-    dependsOn 'uploadArchives'
-    dependsOn 'closeAndPromoteRepository'
-    dependsOn 'bintrayUpload'
-
-    tasks.findByName('build').mustRunAfter 'clean'
-
-    tasks.findByName('uploadArchives').mustRunAfter 'build'
-    tasks.findByName('closeAndPromoteRepository').mustRunAfter 'uploadArchives'
-
-    tasks.findByName('bintrayUpload').mustRunAfter 'build'
-}

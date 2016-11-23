@@ -56,7 +56,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
     private File destinationDirLocation;
     private String basePackageName;
 
-    private SolidityFunctionWrapperGenerator(
+    public SolidityFunctionWrapperGenerator(
             String binaryFileLocation,
             String absFileLocation,
             String destinationDirLocation,
@@ -130,7 +130,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         System.exit(1);
     }
 
-    private void generate() throws IOException, ClassNotFoundException {
+    public void generate() throws IOException, ClassNotFoundException {
 
         File binaryFile = new File(binaryFileLocation);
         if (!binaryFile.exists()) {
