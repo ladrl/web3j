@@ -94,12 +94,15 @@ public class SolidityFunctionWrapperGenerator extends Generator {
             exitError(USAGE);
         }
 
-        new SolidityFunctionWrapperGenerator(
+        String res = new SolidityFunctionWrapperGenerator(
                 binaryFileLocation,
                 absFileLocation,
                 destinationDirLocation,
                 basePackageName)
                 .generate();
+        if(res != null) {
+            exitError(res);
+        }
     }
 
     private static String parsePositionalArg(String[] args, int idx) {
@@ -130,11 +133,11 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         System.exit(1);
     }
 
-    public void generate() throws IOException, ClassNotFoundException {
+    public String generate() throws IOException, ClassNotFoundException {
 
         File binaryFile = new File(binaryFileLocation);
         if (!binaryFile.exists()) {
-            exitError("Invalid input binary file specified: " + binaryFileLocation);
+            return "Invalid input binary file specified: " + binaryFileLocation;
         }
 
         byte[] bytes = Files.readBytes(new File(binaryFile.toURI()));
@@ -142,7 +145,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
 
         File absFile = new File(absFileLocation);
         if (!absFile.exists() || !absFile.canRead()) {
-            exitError("Invalid input ABI file specified: " + absFileLocation);
+            return "Invalid input ABI file specified: " + absFileLocation;
         }
         String fileName = absFile.getName();
         String contractName = getFileNameNoExtension(fileName);
@@ -150,9 +153,10 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         List<AbiDefinition> functionDefinitions = loadContractDefinition(absFile);
 
         if (functionDefinitions.isEmpty()) {
-            exitError("Unable to parse input ABI file");
+            return "Unable to parse input ABI file";
         } else {
             generateSolidityWrappers(binary, contractName, functionDefinitions, basePackageName);
+            return null;
         }
     }
 
