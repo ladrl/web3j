@@ -109,6 +109,14 @@ public class Transaction {
         return convert(nonce);
     }
 
+    @Override
+    public String toString() {
+        return String.format(
+            "Transaction(nonce: %s, gasPrise: %s, from: %s, to: %s, value: %s, data: %s)", 
+            nonce, gasPrice, from, to, value, data
+        );
+    }
+
     private static String convert(BigInteger value) {
         if (value != null) {
             return Numeric.encodeQuantity(value);

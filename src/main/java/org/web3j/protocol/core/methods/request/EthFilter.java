@@ -43,6 +43,14 @@ public class EthFilter extends Filter<EthFilter> {
     }
 
     @Override
+    public String toString() {
+        return String.format(
+            "EthFilter(from:%s, to:%s, addresses:%s)", 
+            fromBlock, toBlock, address
+        );
+    }
+
+    @Override
     Filter getThis() {
         return this;
     }

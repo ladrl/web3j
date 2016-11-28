@@ -83,4 +83,12 @@ public class RawTransaction {
     public String getData() {
         return data;
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+            "RawTransaction(nonce: %s, gasPrise: %s, gasLimit: %s, to: %s, value: %s, data: %s)", 
+            nonce, gasPrice, gasLimit, to, value, data
+        );
+    }
 }

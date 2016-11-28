@@ -59,7 +59,7 @@ public abstract class Contract extends ManagedTransaction {
         return FunctionReturnDecoder.decode(value, function.getOutputParameters());
     }
 
-    protected <T extends Type> Future<T> executeCallSingleValueReturnAsync(
+    public <T extends Type> Future<T> executeCallSingleValueReturnAsync(
             Function function) {
         CompletableFuture<T> result =
                 new CompletableFuture<>();
@@ -74,7 +74,7 @@ public abstract class Contract extends ManagedTransaction {
         return result;
     }
 
-    protected Future<List<Type>> executeCallMultipleValueReturnAsync(
+    public Future<List<Type>> executeCallMultipleValueReturnAsync(
             Function function) {
         CompletableFuture<List<Type>> result =
                 new CompletableFuture<>();
@@ -89,13 +89,13 @@ public abstract class Contract extends ManagedTransaction {
         return result;
     }
 
-    protected <T extends Type> T executeCallSingleValueReturn(
+    public <T extends Type> T executeCallSingleValueReturn(
             Function function) throws InterruptedException, ExecutionException {
         List<Type> values = executeCall(function);
         return (T) values.get(0);
     }
 
-    protected List<Type> executeCallMultipleValueReturn(
+    public List<Type> executeCallMultipleValueReturn(
             Function function) throws InterruptedException, ExecutionException {
         return executeCall(function);
     }
@@ -112,7 +112,7 @@ public abstract class Contract extends ManagedTransaction {
      * while waiting
      * @throws TransactionTimeoutException if the transaction was not mined while waiting
      */
-    protected TransactionReceipt executeTransaction(
+    public TransactionReceipt executeTransaction(
             Function function) throws ExecutionException, InterruptedException,
             TransactionTimeoutException {
         BigInteger nonce = getNonce(credentials.getAddress());
@@ -134,7 +134,7 @@ public abstract class Contract extends ManagedTransaction {
      * @param function to transact with
      * @return {@link Future} containing executing transaction
      */
-    protected Future<TransactionReceipt> executeTransactionAsync(Function function) {
+    public Future<TransactionReceipt> executeTransactionAsync(Function function) {
         CompletableFuture<TransactionReceipt> result =
                 new CompletableFuture<>();
 
@@ -148,7 +148,7 @@ public abstract class Contract extends ManagedTransaction {
         return result;
     }
 
-    protected EventValues extractEventParameters(
+    public EventValues extractEventParameters(
             Event event, TransactionReceipt transactionReceipt) {
 
         List<Log> logs = transactionReceipt.getLogs();
@@ -176,7 +176,7 @@ public abstract class Contract extends ManagedTransaction {
         return new EventValues(indexedValues, nonIndexedValues);
     }
 
-    private static String create(
+    public static String create(
             Web3j web3j, Credentials credentials,
             BigInteger gasPrice, BigInteger gasLimit,
             String binary, String encodedConstructor, BigInteger value)
@@ -201,7 +201,7 @@ public abstract class Contract extends ManagedTransaction {
         }
     }
 
-    protected static <T extends Contract> T deploy(
+    public static <T extends Contract> T deploy(
             Class<T> type,
             Web3j web3j, Credentials credentials,
             BigInteger gasPrice, BigInteger gasLimit,
@@ -217,7 +217,7 @@ public abstract class Contract extends ManagedTransaction {
         return constructor.newInstance(contractAddress, web3j, credentials, gasPrice, gasLimit);
     }
 
-    protected static <T extends Contract> CompletableFuture<T> deployAsync(
+    public static <T extends Contract> CompletableFuture<T> deployAsync(
             Class<T> type, Web3j web3j, Credentials credentials,
             BigInteger gasPrice, BigInteger gasLimit,
             String binary, String encodedConstructor, BigInteger value) {

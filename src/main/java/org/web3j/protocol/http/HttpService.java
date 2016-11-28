@@ -22,10 +22,15 @@ import org.web3j.protocol.ObjectMapperFactory;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 /**
  * HTTP implementation of our services API.
  */
 public class HttpService implements Web3jService {
+
+    private static final Logger log = LoggerFactory.getLogger(HttpService.class);
 
     public static final String DEFAULT_URL = "http://localhost:8545/";
 
@@ -55,7 +60,7 @@ public class HttpService implements Web3jService {
     @Override
     public <T extends Response> T send(
             Request request, Class<T> responseType) throws IOException {
-
+        log.debug("Sending request '{}' to '{}'", request, url);
         byte[] payload = objectMapper.writeValueAsBytes(request);
 
         HttpPost httpPost = new HttpPost(this.url);
@@ -85,9 +90,10 @@ public class HttpService implements Web3jService {
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
                 HttpEntity entity = response.getEntity();
-
                 if (entity != null) {
-                    return objectMapper.readValue(response.getEntity().getContent(), type);
+                    final T content =  objectMapper.readValue(response.getEntity().getContent(), type);
+                    log.debug("Response[{}]({})", status, content);
+                    return content;
                 } else {
                     return null;
                 }

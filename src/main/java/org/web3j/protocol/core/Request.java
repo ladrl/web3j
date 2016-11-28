@@ -72,4 +72,12 @@ public class Request<S, T extends Response> {
         return  web3jService.sendAsync(this, responseType);
     }
 
+    @Override 
+    public String toString() {
+        return String.format(
+            "Request(method: %s, params: %s, id: %s)",
+            method, params, id
+        );
+    }
+
 }

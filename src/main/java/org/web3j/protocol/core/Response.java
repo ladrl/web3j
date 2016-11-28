@@ -10,6 +10,14 @@ public class Response<T> {
     private T result;
     private Error error;
 
+    @Override
+    public String toString() {
+        return String.format(
+            "Response(id: %s, json: %s) => %s",
+            id, jsonrpc, error != null ? error : result
+        );
+    }
+
     public Response() {
     }
 
@@ -53,6 +61,11 @@ public class Response<T> {
         private int code;
         private String message;
         private String data;
+
+        @Override
+        public String toString() {
+            return String.format("Error(code: %d, message: %s, data: %s)", code, message, data);
+        }
 
         public Error() {
         }

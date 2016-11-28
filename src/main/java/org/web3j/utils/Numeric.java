@@ -51,9 +51,11 @@ public final class Numeric {
             return false;
         }
 
+        /*
         if (value.length() > 3 && value.charAt(2) == '0') {
             return false;
         }
+        */
 
         return true;
     }
