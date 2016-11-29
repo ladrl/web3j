@@ -12,6 +12,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.exceptions.TransactionTimeoutException;
+import org.web3j.protocol.exceptions.TransactionFailedException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
@@ -114,7 +115,7 @@ public class WalletSendFunds extends WalletManager {
             }
             console.printf("$%n%n");
             return future.get();
-        } catch (InterruptedException | ExecutionException | TransactionTimeoutException e) {
+        } catch (InterruptedException | ExecutionException | TransactionTimeoutException | TransactionFailedException e) {
             exitError("Problem encountered transferring funds: " + e.getMessage());
         }
         throw new RuntimeException("Application exit failure");

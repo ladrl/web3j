@@ -14,6 +14,7 @@ import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionTimeoutException;
+import org.web3j.protocol.exceptions.TransactionFailedException;
 import org.web3j.utils.Numeric;
 
 
@@ -65,13 +66,16 @@ public abstract class ManagedTransaction {
     }
 
     protected TransactionReceipt signAndSend(RawTransaction rawTransaction)
-            throws InterruptedException, ExecutionException, TransactionTimeoutException{
+            throws InterruptedException, ExecutionException, TransactionTimeoutException, TransactionFailedException{
         byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
         String hexValue = Numeric.toHexString(signedMessage);
 
         // This might be a good candidate for using functional composition with CompletableFutures
         EthSendTransaction transactionResponse = web3j.ethSendRawTransaction(hexValue)
                 .sendAsync().get();
+        if(transactionResponse.hasError()) {
+            throw new TransactionFailedException(rawTransaction, transactionResponse);
+        }
 
         String transactionHash = transactionResponse.getTransactionHash();
 

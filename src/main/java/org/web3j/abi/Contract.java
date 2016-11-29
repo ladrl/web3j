@@ -19,6 +19,7 @@ import org.web3j.protocol.core.methods.request.RawTransaction;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.exceptions.TransactionTimeoutException;
+import org.web3j.protocol.exceptions.TransactionFailedException;
 
 
 /**
@@ -114,7 +115,7 @@ public abstract class Contract extends ManagedTransaction {
      */
     public TransactionReceipt executeTransaction(
             Function function) throws ExecutionException, InterruptedException,
-            TransactionTimeoutException {
+            TransactionTimeoutException, TransactionFailedException {
         BigInteger nonce = getNonce(credentials.getAddress());
         String encodedFunction = FunctionEncoder.encode(function);
 
@@ -141,7 +142,7 @@ public abstract class Contract extends ManagedTransaction {
         CompletableFuture.runAsync(() -> {
             try {
                 result.complete(executeTransaction(function));
-            } catch (InterruptedException|ExecutionException|TransactionTimeoutException e) {
+            } catch (InterruptedException|ExecutionException|TransactionTimeoutException|TransactionFailedException e) {
                 result.completeExceptionally(e);
             }
         });
@@ -180,7 +181,7 @@ public abstract class Contract extends ManagedTransaction {
             Web3j web3j, Credentials credentials,
             BigInteger gasPrice, BigInteger gasLimit,
             String binary, String encodedConstructor, BigInteger value)
-            throws InterruptedException, ExecutionException, TransactionTimeoutException {
+            throws InterruptedException, ExecutionException, TransactionTimeoutException, TransactionFailedException {
 
         Contract contract = new Contract("", web3j, credentials, gasPrice, gasLimit) { };
 
