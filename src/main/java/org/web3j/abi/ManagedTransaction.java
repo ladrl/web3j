@@ -23,6 +23,8 @@ import org.web3j.utils.Numeric;
  */
 public abstract class ManagedTransaction {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ManagedTransaction.class);
+
     // Sensible defaults as of November 2016...
     public static final BigInteger GAS_PRICE = BigInteger.valueOf(50_000_000_000L);
     public static final BigInteger GAS_LIMIT = BigInteger.valueOf(2_000_000);
@@ -73,7 +75,9 @@ public abstract class ManagedTransaction {
         // This might be a good candidate for using functional composition with CompletableFutures
         EthSendTransaction transactionResponse = web3j.ethSendRawTransaction(hexValue)
                 .sendAsync().get();
+        log.debug("Response to {} is {}", rawTransaction, transactionResponse);
         if(transactionResponse.hasError()) {
+            log.warn("Error is {}", transactionResponse);
             throw new TransactionFailedException(rawTransaction, transactionResponse);
         }
 

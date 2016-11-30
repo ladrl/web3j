@@ -22,15 +22,12 @@ import org.web3j.protocol.ObjectMapperFactory;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
-import org.slf4j.LoggerFactory;
-import org.slf4j.Logger;
-
 /**
  * HTTP implementation of our services API.
  */
 public class HttpService implements Web3jService {
 
-    private static final Logger log = LoggerFactory.getLogger(HttpService.class);
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HttpService.class);
 
     public static final String DEFAULT_URL = "http://localhost:8545/";
 

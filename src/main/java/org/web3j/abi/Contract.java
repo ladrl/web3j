@@ -21,17 +21,22 @@ import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.exceptions.TransactionTimeoutException;
 import org.web3j.protocol.exceptions.TransactionFailedException;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 /**
  * Solidity contract type abstraction for interacting with smart contracts via native Java types.
  */
 public abstract class Contract extends ManagedTransaction {
 
+    private final Logger log;
+
     private String contractAddress;
 
     protected Contract(String contractAddress, Web3j web3j, Credentials credentials,
                        BigInteger gasPrice, BigInteger gasLimit) {
         super(web3j, credentials, gasPrice, gasLimit);
+        log = LoggerFactory.getLogger(this.getClass());
 
         this.contractAddress = contractAddress;
     }
@@ -51,10 +56,11 @@ public abstract class Contract extends ManagedTransaction {
     private List<Type> executeCall(
             Function function) throws InterruptedException, ExecutionException {
         String encodedFunction = FunctionEncoder.encode(function);
+        
         org.web3j.protocol.core.methods.response.EthCall ethCall = web3j.ethCall(
-                Transaction.createEthCallTransaction(contractAddress, encodedFunction),
-                DefaultBlockParameterName.LATEST)
-                .sendAsync().get();
+            Transaction.createEthCallTransaction(contractAddress, encodedFunction),
+            DefaultBlockParameterName.LATEST)
+            .sendAsync().get();
 
         String value = ethCall.getValue();
         return FunctionReturnDecoder.decode(value, function.getOutputParameters());
@@ -125,8 +131,12 @@ public abstract class Contract extends ManagedTransaction {
                 gasLimit,
                 contractAddress,
                 encodedFunction);
-
-        return signAndSend(rawTransaction);
+        try {
+            return signAndSend(rawTransaction);
+        } catch (TransactionFailedException e) {
+            log.warn("While calling {}", function, e);
+            throw new FunctionCallFailedException(function, e);
+        }
     }
 
     /**
@@ -143,6 +153,7 @@ public abstract class Contract extends ManagedTransaction {
             try {
                 result.complete(executeTransaction(function));
             } catch (InterruptedException|ExecutionException|TransactionTimeoutException|TransactionFailedException e) {
+                log.warn("While calling {}", function, e);
                 result.completeExceptionally(e);
             }
         });
