@@ -57,6 +57,7 @@ public abstract class Contract extends ManagedTransaction {
             Function function) throws InterruptedException, ExecutionException {
         String encodedFunction = FunctionEncoder.encode(function);
         
+        log.debug("Calling {} on {}", function, contractAddress);
         org.web3j.protocol.core.methods.response.EthCall ethCall = web3j.ethCall(
             Transaction.createEthCallTransaction(contractAddress, encodedFunction),
             DefaultBlockParameterName.LATEST)

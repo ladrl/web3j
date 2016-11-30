@@ -33,6 +33,7 @@ import static org.web3j.utils.Collection.tail;
  */
 public class SolidityFunctionWrapperGenerator extends Generator {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SolidityFunctionWrapperGenerator.class);
     private static final String BINARY = "BINARY";
     private static final String WEB3J = "web3j";
     private static final String CREDENTIALS = "credentials";
@@ -155,6 +156,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         if (functionDefinitions.isEmpty()) {
             return "Unable to parse input ABI file";
         } else {
+            log.debug("Generating wrapper for ABI " + absFileLocation + " and BIN " + binaryFile);
             generateSolidityWrappers(binary, contractName, functionDefinitions, basePackageName);
             return null;
         }
@@ -364,6 +366,8 @@ public class SolidityFunctionWrapperGenerator extends Generator {
 
     private static MethodSpec buildFunction(
             AbiDefinition functionDefinition) throws ClassNotFoundException {
+        log.debug("Creating function " + functionDefinition.toString());
+
         String functionName = functionDefinition.getName();
 
         MethodSpec.Builder methodBuilder =
@@ -374,14 +378,10 @@ public class SolidityFunctionWrapperGenerator extends Generator {
 
         List<TypeName> outputParameterTypes = buildTypeNames(functionDefinition.getOutputs());
         if (functionDefinition.isConstant()) {
-            methodBuilder = buildConstantFunction(
-                    functionDefinition, methodBuilder, outputParameterTypes, inputParams);
+            return buildConstantFunction(functionDefinition, methodBuilder, outputParameterTypes, inputParams).build();
         } else {
-            methodBuilder = buildTransactionFunction(
-                    functionDefinition, methodBuilder, inputParams);
+            return buildTransactionFunction(functionDefinition, methodBuilder, inputParams).build();
         }
-
-        return methodBuilder.build();
     }
 
     private static MethodSpec.Builder  buildConstantFunction(
@@ -390,8 +390,6 @@ public class SolidityFunctionWrapperGenerator extends Generator {
             List<TypeName> outputParameterTypes,
             String inputParams) throws ClassNotFoundException {
 
-        String functionName = functionDefinition.getName();
-
         if (outputParameterTypes.isEmpty()) {
             throw new RuntimeException("Only transactional methods should have void return types");
         } else if (outputParameterTypes.size() == 1) {
@@ -399,9 +397,11 @@ public class SolidityFunctionWrapperGenerator extends Generator {
                     ClassName.get(Future.class), outputParameterTypes.get(0)));
 
             TypeName typeName = outputParameterTypes.get(0);
-            methodBuilder.addStatement("$T function = " +
-                            "new $T($S, \n$T.<$T>asList($L), \n$T.<$T<?>>asList(new $T<$T>() {}))",
-                    Function.class, Function.class, functionName,
+            methodBuilder.addStatement(
+                "$T function = new $T($S, $T.<$T>asList($L), $T.<$T<?>>asList(new $T<$T>() {}))",
+                    Function.class, 
+                    Function.class, 
+                    functionDefinition.getName(),
                     Arrays.class, Type.class, inputParams,
                     Arrays.class, TypeReference.class,
                     TypeReference.class, typeName);
@@ -414,7 +414,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
                             ClassName.get(List.class), ClassName.get(Type.class))));
 
             buildVariableLengthReturnFunctionConstructor(
-                    methodBuilder, functionName, inputParams, outputParameterTypes);
+                    methodBuilder, functionDefinition.getName(), inputParams, outputParameterTypes);
 
             methodBuilder.addStatement("return executeCallMultipleValueReturnAsync(function)");
         }
@@ -511,9 +511,10 @@ public class SolidityFunctionWrapperGenerator extends Generator {
             objects.add(TypeReference.class);
             objects.add(outputParameterType);
             // workaround for parameterizing the function constructor
-            objects.set(2, outputParameterType);
+            //objects.set(2, outputParameterType); // <<-- what do we work around here?
         }
 
+        log.debug("Building variableLengthReturnFunctionConstructor: " + objects);
         String asListParams = Collection.join(
                 outputParameterTypes,
                 ", ",

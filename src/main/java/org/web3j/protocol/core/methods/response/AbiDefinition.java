@@ -16,6 +16,15 @@ public class AbiDefinition {
     private String type;
     private boolean payable;
 
+    @Override
+    public String toString() {
+        return String.format(
+            "Abi[%s]%s(%s):%s", 
+            (constant ? "constant" : "transactional") + "," + (payable ? "payable" : "blocked"),
+            name, inputs, outputs
+        );
+    }
+
     public AbiDefinition() {
     }
 

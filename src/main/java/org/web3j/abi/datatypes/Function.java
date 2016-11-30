@@ -32,4 +32,9 @@ public class Function {
     public List<TypeReference<Type>> getOutputParameters() {
         return outputParameters;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s(%s): %s", name, inputParameters, outputParameters);
+    }
 }
