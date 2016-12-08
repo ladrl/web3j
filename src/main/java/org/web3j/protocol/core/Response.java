@@ -13,7 +13,7 @@ public class Response<T> {
     @Override
     public String toString() {
         return String.format(
-            "Response(id: %s, json: %s) => %s",
+            "Response(id: %s, json: '%s') => '%s'",
             id, jsonrpc, error != null ? error : result
         );
     }
@@ -55,6 +55,21 @@ public class Response<T> {
 
     public boolean hasError() {
         return error != null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Response response = (Response) o;
+
+        if (id != response.id) return false;
+        if (!jsonrpc.equals(response.jsonrpc)) return false;
+
+        if (error != null && !error.equals(response.error)) return false;
+        if (result != null && !result.equals(response.result)) return false;
+        return true;
     }
 
     public static class Error {
@@ -108,7 +123,6 @@ public class Response<T> {
 
             if (code != error.code) return false;
             return message != null ? message.equals(error.message) : error.message == null;
-
         }
 
         @Override

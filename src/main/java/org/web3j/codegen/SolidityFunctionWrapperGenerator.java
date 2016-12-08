@@ -233,7 +233,7 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         // constructor will not be specified in ABI file if its empty
         if (!constructor) {
             MethodSpec.Builder methodBuilder = getDeployMethodSpec(className);
-            methodSpecs.add(buildDeployAsyncNoParams(methodBuilder, className));
+            methodSpecs.add(buildDeployNoParams(methodBuilder, className));
         }
 
         return methodSpecs;
@@ -259,36 +259,52 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         String inputParams = addParameters(methodBuilder, functionDefinition.getInputs());
 
         if (!inputParams.isEmpty()) {
-            return buildDeployAsyncWithParams(methodBuilder, className, inputParams);
+            return buildDeployWithParams(methodBuilder, className, inputParams);
         } else {
-            return buildDeployAsyncNoParams(methodBuilder, className);
+            return buildDeployNoParams(methodBuilder, className);
         }
     }
 
-    private static MethodSpec buildDeployAsyncWithParams(
+    private static MethodSpec buildDeployWithParams(
             MethodSpec.Builder methodBuilder, String className, String inputParams) {
-        methodBuilder.addStatement("$T encodedConstructor = $T.encodeConstructor(" +
-                        "$T.<$T>asList($L)" +
-                        ")",
-                String.class, FunctionEncoder.class, Arrays.class, Type.class, inputParams);
         methodBuilder.addStatement(
-                "return deployAsync($L.class, $L, $L, $L, $L, $L, encodedConstructor, $L)",
-                className, WEB3J, CREDENTIALS, GAS_PRICE, GAS_LIMIT, BINARY, INITIAL_VALUE);
+            "$T encodedConstructor = $T.encodeConstructor($T.<$T>asList($L))",
+            String.class, 
+            FunctionEncoder.class, 
+            Arrays.class, 
+            Type.class, 
+            inputParams);
+        methodBuilder.addException(Exception.class);
+        methodBuilder.addStatement(
+            "return deploy($L.class, $L, $L, $L, $L, $L, encodedConstructor, $L)",
+            className, 
+            WEB3J, 
+            CREDENTIALS, 
+            GAS_PRICE, 
+            GAS_LIMIT, 
+            BINARY, 
+            INITIAL_VALUE);
         return methodBuilder.build();
     }
 
-    private static MethodSpec buildDeployAsyncNoParams(
-            MethodSpec.Builder methodBuilder, String className) {
-        methodBuilder.addStatement("return deployAsync($L.class, $L, $L, $L, $L, $L, \"\", $L)",
-                className, WEB3J, CREDENTIALS, GAS_PRICE, GAS_LIMIT, BINARY, INITIAL_VALUE);
+    private static MethodSpec buildDeployNoParams(MethodSpec.Builder methodBuilder, String className) {
+        methodBuilder.addException(Exception.class);
+        methodBuilder.addStatement(
+            "return deploy($L.class, $L, $L, $L, $L, $L, \"\", $L)",
+            className, 
+            WEB3J, 
+            CREDENTIALS, 
+            GAS_PRICE, 
+            GAS_LIMIT, 
+            BINARY, 
+            INITIAL_VALUE);
         return methodBuilder.build();
     }
 
     private static MethodSpec.Builder getDeployMethodSpec(String className) {
         return MethodSpec.methodBuilder("deploy")
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-                .returns(ParameterizedTypeName.get(
-                        ClassName.get(Future.class), TypeVariableName.get(className, Type.class)))
+                .returns(TypeVariableName.get(className, Type.class))
                 .addParameter(Web3j.class, WEB3J)
                 .addParameter(Credentials.class, CREDENTIALS)
                 .addParameter(BigInteger.class, GAS_PRICE)
@@ -305,8 +321,14 @@ public class SolidityFunctionWrapperGenerator extends Generator {
                 .addParameter(Credentials.class, CREDENTIALS)
                 .addParameter(BigInteger.class, GAS_PRICE)
                 .addParameter(BigInteger.class, GAS_LIMIT)
-                .addStatement("return new $L($L, $L, $L, $L, $L)",
-                        className, CONTRACT_ADDRESS, WEB3J, CREDENTIALS, GAS_PRICE, GAS_LIMIT)
+                .addStatement(
+                    "return new $L($L, $L, $L, $L, $L)",
+                    className, 
+                    CONTRACT_ADDRESS, 
+                    WEB3J, 
+                    CREDENTIALS, 
+                    GAS_PRICE, 
+                    GAS_LIMIT)
                 .build();
     }
 
@@ -393,8 +415,8 @@ public class SolidityFunctionWrapperGenerator extends Generator {
         if (outputParameterTypes.isEmpty()) {
             throw new RuntimeException("Only transactional methods should have void return types");
         } else if (outputParameterTypes.size() == 1) {
-            methodBuilder.returns(ParameterizedTypeName.get(
-                    ClassName.get(Future.class), outputParameterTypes.get(0)));
+            methodBuilder.returns(outputParameterTypes.get(0));
+            methodBuilder.addException(Exception.class);
 
             TypeName typeName = outputParameterTypes.get(0);
             methodBuilder.addStatement(
@@ -405,18 +427,22 @@ public class SolidityFunctionWrapperGenerator extends Generator {
                     Arrays.class, Type.class, inputParams,
                     Arrays.class, TypeReference.class,
                     TypeReference.class, typeName);
-            methodBuilder.addStatement("return executeCallSingleValueReturnAsync(function)");
+            methodBuilder.addStatement("return executeCallSingleValueReturn(function)");
 
         } else {
-            methodBuilder.returns(ParameterizedTypeName.get(
-                    ClassName.get(Future.class),
-                    ParameterizedTypeName.get(
-                            ClassName.get(List.class), ClassName.get(Type.class))));
+            methodBuilder.returns(ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(Type.class)));
+            methodBuilder.addException(java.util.concurrent.ExecutionException.class);
+            methodBuilder.addException(InterruptedException.class);
+            methodBuilder.addException(org.web3j.protocol.exceptions.TransactionTimeoutException.class);
+            methodBuilder.addException(org.web3j.protocol.exceptions.TransactionFailedException.class);
 
             buildVariableLengthReturnFunctionConstructor(
-                    methodBuilder, functionDefinition.getName(), inputParams, outputParameterTypes);
+                methodBuilder, 
+                functionDefinition.getName(), 
+                inputParams, 
+                outputParameterTypes);
 
-            methodBuilder.addStatement("return executeCallMultipleValueReturnAsync(function)");
+            methodBuilder.addStatement("return executeCallMultipleValueReturn(function)");
         }
 
         return methodBuilder;
@@ -429,13 +455,17 @@ public class SolidityFunctionWrapperGenerator extends Generator {
 
         String functionName = functionDefinition.getName();
 
-        methodBuilder.returns(ParameterizedTypeName.get(Future.class, TransactionReceipt.class));
+        methodBuilder.returns(TransactionReceipt.class);
+        methodBuilder.addException(java.util.concurrent.ExecutionException.class);
+        methodBuilder.addException(InterruptedException.class);
+        methodBuilder.addException(org.web3j.protocol.exceptions.TransactionTimeoutException.class);
+        methodBuilder.addException(org.web3j.protocol.exceptions.TransactionFailedException.class);
 
         methodBuilder.addStatement("$T function = new $T($S, $T.<$T>asList($L), $T.<$T<?>>emptyList())",
                 Function.class, Function.class, functionName,
                 Arrays.class, Type.class, inputParams, Collections.class,
                 TypeReference.class);
-        methodBuilder.addStatement("return executeTransactionAsync(function)");
+        methodBuilder.addStatement("return executeTransaction(function)");
 
         return methodBuilder;
     }

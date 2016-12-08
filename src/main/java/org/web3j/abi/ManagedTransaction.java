@@ -75,9 +75,9 @@ public abstract class ManagedTransaction {
         // This might be a good candidate for using functional composition with CompletableFutures
         EthSendTransaction transactionResponse = web3j.ethSendRawTransaction(hexValue)
                 .sendAsync().get();
-        log.debug("Response to {} is {}", rawTransaction, transactionResponse);
+        //log.debug("Response to {} is {}", rawTransaction, transactionResponse);
         if(transactionResponse.hasError()) {
-            log.warn("Error is {}", transactionResponse);
+            //log.warn("Error is {}", transactionResponse);
             throw new TransactionFailedException(rawTransaction, transactionResponse);
         }
 

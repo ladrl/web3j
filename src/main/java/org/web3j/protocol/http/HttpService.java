@@ -57,8 +57,8 @@ public class HttpService implements Web3jService {
     @Override
     public <T extends Response> T send(
             Request request, Class<T> responseType) throws IOException {
-        log.debug("Sending request '{}' to '{}'", request, url);
         byte[] payload = objectMapper.writeValueAsBytes(request);
+        //log.debug("Sending request '{}' to '{}' ({})", request, url, objectMapper.writeValueAsString(request));
 
         HttpPost httpPost = new HttpPost(this.url);
         httpPost.setEntity(new ByteArrayEntity(payload));
@@ -89,7 +89,7 @@ public class HttpService implements Web3jService {
                 HttpEntity entity = response.getEntity();
                 if (entity != null) {
                     final T content =  objectMapper.readValue(response.getEntity().getContent(), type);
-                    log.debug("Response[{}]({})", status, content);
+                    //log.debug("Response[{}]({})", status, content);
                     return content;
                 } else {
                     return null;
